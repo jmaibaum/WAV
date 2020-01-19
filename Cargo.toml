@@ -1,12 +1,12 @@
 [package]
 name = "wav"
-description = "This is a crate for reading in and writing out wave files. It supports bit depths of 8, 16, and 24 bits, and any number of channels."
+description = "This is a crate for reading in and writing out wave files. It supports bit depths of 8, 16, and 24 bits, any number of channels, and uncompressed PCM data. Unfortunately other types of data format (e.g. compressed WAVE files) are not supported."
 readme = "README.md"
 homepage = "https://github.com/Fluhzar/WAV"
 documentation = "https://docs.rs/wav"
 repository = "https://github.com/Fluhzar/WAV"
 license = "LGPL-3.0"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Fluhzar <fluhzar@pm.me>"]
 edition = "2018"
 

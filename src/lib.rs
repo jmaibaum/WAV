@@ -1,7 +1,9 @@
 //! # WAV
 //! 
 //! This is a crate for reading in and writing out wave files. It supports bit
-//! depths of 8, 16, and 24 bits, and any number of channels.
+//! depths of 8, 16, and 24 bits, any number of channels, and uncompressed PCM
+//! data. Unfortunately other types of data format (e.g. compressed WAVE files)
+//! are not supported.
 
 use riff;
 use std::path::Path;
@@ -23,9 +25,9 @@ impl Header {
 	/// 
 	/// # Parameters
 	/// 
-	/// * `af` - Audio format. Generally 1.
-	/// * `cc` - Channel count, the number of channels each sample has. Generally 1 or 2.
-	/// * `r` - Sampling rate.
+	/// * `af` - Audio format. 1 for uncompressed PCM data.
+	/// * `cc` - Channel count, the number of channels each sample has. Generally 1 (mono) or 2 (stereo).
+	/// * `r` - Sampling rate (e.g. 44.1kHz, 48kHz, 96kHz, etc.).
 	/// * `bps` - Number of bits in each (sub-channel) sample. Generally 8, 16, or 24.
 	/// 
 	/// # Example
@@ -46,7 +48,7 @@ impl Header {
 }
 
 impl Into<[u8;16]> for Header {
-	/// Converts the Header object into a vector of its bytes
+	/// Converts the Header object into a vector of its bytes.
 	/// 
 	/// # Example
 	/// 
@@ -164,6 +166,7 @@ impl From<Vec<i32>> for BitDepth {
 impl std::convert::TryInto<Vec<u8>> for BitDepth {
 	/// Error type if the conversion couldn't be performed.
 	type Error = &'static str;
+
 	/// Attempts to create a vector from the object.
 	/// 
 	/// # Errors
@@ -180,6 +183,7 @@ impl std::convert::TryInto<Vec<u8>> for BitDepth {
 impl std::convert::TryInto<Vec<i16>> for BitDepth {
 	/// Error type if the conversion couldn't be performed.
 	type Error = &'static str;
+
 	/// Attempts to create a vector from the object.
 	/// 
 	/// # Errors
@@ -196,6 +200,7 @@ impl std::convert::TryInto<Vec<i16>> for BitDepth {
 impl std::convert::TryInto<Vec<i32>> for BitDepth {
 	/// Error type if the conversion couldn't be performed.
 	type Error = &'static str;
+
 	/// Attempts to create a vector from the object.
 	/// 
 	/// # Errors
@@ -219,6 +224,7 @@ impl std::convert::TryInto<Vec<i32>> for BitDepth {
 /// * The file couldn't be opened or read.
 /// * The file isn't a RIFF file.
 /// * The wave data is malformed.
+/// * The wave header specifies a compressed data format.
 pub fn read_file(p: &Path) -> std::io::Result<(Header, BitDepth)> {
 	use std::fs::File;
 
@@ -231,40 +237,57 @@ pub fn read_file(p: &Path) -> std::io::Result<(Header, BitDepth)> {
 	match wav.content {
 		riff::ChunkContent::List{form_type,subchunks} => {
 			if form_type.as_str() != "WAVE" {
-				return Err(std::io::Error::new(std::io::ErrorKind::Other, "File not a WAVE file"));
+				return Err(std::io::Error::new(std::io::ErrorKind::Other, "RIFF file type not \"WAVE\""));
 			} else {
-				if let riff::ChunkContent::Subchunk(v) = &subchunks[0].content {
-					head = Header::from(v.as_slice());
+					// Get the header from the first chunk
+				for c in &subchunks {
+						// Check for `fmt ` chunk
+					if c.id.as_str() == "fmt " {
+						if let riff::ChunkContent::Subchunk(v) = &c.content {
+							head = Header::from(v.as_slice());
+						}
+					}
 				}
-				if let riff::ChunkContent::Subchunk(v) = &subchunks[1].content {
-					match head.bits_per_sample {
-						8 => {
-							data = BitDepth::Eight(v.clone());
-						},
-						16 => {
-							let mut i = 0;
-							let mut sam = Vec::new();
-							while i < v.len() {
-								for _ in 0..head.channel_count {
-									sam.push(i16::from_le_bytes([v[i],v[i+1]]));
-									i += 2;
-								}
-							}
-							data = BitDepth::Sixteen(sam);
-						},
-						24 => {
-							let mut i = 0;
-							let mut sam = Vec::new();
-							while i < v.len() {
-								for _ in 0..head.channel_count {
-									sam.push(i32::from_le_bytes([v[i],v[i+1],v[i+2],0]));
-									i += 3;
-								}
-							}
-							data = BitDepth::TwentyFour(sam);
-						},
-						_ => return Err(std::io::Error::new(std::io::ErrorKind::Other, "Unsupported bitrate")),
-					};
+					// Return error if not using PCM
+				if head.audio_format != 1 {
+					return Err(std::io::Error::new(std::io::ErrorKind::Other, "File does not use uncompressed PCM data format"))
+				}
+
+					// Get the data from the second chunk
+				for c in &subchunks {
+						// Check for `data` chunk
+					if c.id.as_str() == "data" {
+						if let riff::ChunkContent::Subchunk(v) = &subchunks[1].content {
+							match head.bits_per_sample {
+								8 => {
+									data = BitDepth::Eight(v.clone());
+								},
+								16 => {
+									let mut i = 0;
+									let mut sam = Vec::new();
+									while i < v.len() {
+										for _ in 0..head.channel_count {
+											sam.push(i16::from_le_bytes([v[i],v[i+1]]));
+											i += 2;
+										}
+									}
+									data = BitDepth::Sixteen(sam);
+								},
+								24 => {
+									let mut i = 0;
+									let mut sam = Vec::new();
+									while i < v.len() {
+										for _ in 0..head.channel_count {
+											sam.push(i32::from_le_bytes([v[i],v[i+1],v[i+2],0]));
+											i += 3;
+										}
+									}
+									data = BitDepth::TwentyFour(sam);
+								},
+								_ => return Err(std::io::Error::new(std::io::ErrorKind::Other, "Unsupported bitrate")),
+							};
+						}
+					}
 				}
 			}
 		},
@@ -285,10 +308,11 @@ pub fn read_file(p: &Path) -> std::io::Result<(Header, BitDepth)> {
 /// This function fails if:
 /// * The file couldn't be opened or written to.
 /// * The path to the desired file destination couldn't be created.
+/// * The given BitDepth is `BitDepth::Empty`
 pub fn write_wav(header: Header, track: BitDepth, p: &Path) -> std::io::Result<()> {
 	use std::fs::File;
 
-	if let Some(i) = p.to_string_lossy().rfind('/') {
+	if let Some(i) = p.to_string_lossy().find('/') {
 		std::fs::create_dir_all(String::from(p.to_string_lossy().split_at(i).0))?;
 	}
 
@@ -318,12 +342,11 @@ pub fn write_wav(header: Header, track: BitDepth, p: &Path) -> std::io::Result<(
 				d_vec.append(&mut v);
 			}
 		},
-		_ => (),
+		_ => return Err(std::io::Error::new(std::io::ErrorKind::Other,"Empty audio data given")),
 	};
-
 	let d_dat = riff::Chunk::new_data(d_id, d_vec);
-	let r = riff::Chunk::new_riff(w_id, vec![h_dat, d_dat]);
 
+	let r = riff::Chunk::new_riff(w_id, vec![h_dat, d_dat]);
 	let mut f = File::create(p)?;
 
 	riff::write_chunk(&mut f, &r)?;
