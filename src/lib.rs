@@ -4,12 +4,21 @@
 //! depths of 8, 16, and 24 bits, any number of channels, and uncompressed PCM
 //! data. Unfortunately other types of data format (e.g. compressed WAVE files)
 //! are not supported.
+//! 
+//! # Example
+//! 
+//! ```
+//! let (header, data) = wav::read_file(std::path::Path::new("data/sine.wav")).unwrap();
+//! 
+//! wav::write_wav(header, data, std::path::Path::new("data/output.wav")).unwrap();
+//! ```
 
 use riff;
 use std::path::Path;
 
 /// Structure for the "fmt " chunk of wave files, specifying key information
-/// about the enclosed data.
+/// about the enclosed data. This struct supports only PCM data, which is to
+/// say there is no extra members for compressed format data.
 #[derive(Debug,Default,Copy,Clone,PartialEq,Eq)]
 pub struct Header {
 	pub audio_format:u16,
