@@ -234,7 +234,7 @@ impl std::convert::TryInto<Vec<i32>> for BitDepth {
 /// * The file isn't a RIFF file.
 /// * The wave data is malformed.
 /// * The wave header specifies a compressed data format.
-pub fn read_file(p: &Path) -> std::io::Result<(Header, BitDepth)> {
+pub fn read_wav(p: &Path) -> std::io::Result<(Header, BitDepth)> {
 	use std::fs::File;
 
 	let mut reader = File::open(p)?;

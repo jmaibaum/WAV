@@ -1,14 +1,15 @@
 [package]
 name = "wav"
-description = "This is a crate for reading in and writing out wave files. It supports bit depths of 8, 16, and 24 bits, any number of channels, and uncompressed PCM data. Unfortunately other types of data format (e.g. compressed WAVE files) are not supported."
+description = "This is a crate for reading in and writing out wave files. It supports bit depths of 8, 16, and 24 bits, and any number of channels."
 readme = "README.md"
-homepage = "https://github.com/Fluhzar/WAV"
 documentation = "https://docs.rs/wav"
 repository = "https://github.com/Fluhzar/WAV"
 license = "LGPL-3.0"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Fluhzar <fluhzar@pm.me>"]
 edition = "2018"
+keywords = ["audio", "file", "file-format", "file-io"]
+categories = ["filesystem", "multimedia::audio", "parsing"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
