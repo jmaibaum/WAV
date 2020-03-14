@@ -8,13 +8,17 @@
 //! # Example
 //! 
 //! ```
-//! let (header, data) = wav::read_file(std::path::Path::new("data/sine.wav")).unwrap();
+//! # use std::fs::File;
+//! # use std::path::Path;
+//! let mut inp_file = File::open(Path::new("data/sine.wav")).unwrap();
+//! let (header, data) = wav::read_wav(&mut inp_file).unwrap();
 //! 
-//! wav::write_wav(header, data, std::path::Path::new("data/output.wav")).unwrap();
+//! let mut out_file = File::create(Path::new("data/sine.wav")).unwrap();
+//! wav::write_wav(header, data, &mut out_file).unwrap();
 //! ```
 
 use riff;
-use std::path::Path;
+use std::io::{Read, Write};
 
 /// Structure for the "fmt " chunk of wave files, specifying key information
 /// about the enclosed data. This struct supports only PCM data, which is to
@@ -234,11 +238,8 @@ impl std::convert::TryInto<Vec<i32>> for BitDepth {
 /// * The file isn't a RIFF file.
 /// * The wave data is malformed.
 /// * The wave header specifies a compressed data format.
-pub fn read_wav(p: &Path) -> std::io::Result<(Header, BitDepth)> {
-	use std::fs::File;
-
-	let mut reader = File::open(p)?;
-	let (wav, _) = riff::read_chunk(&mut reader)?;
+pub fn read_wav(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
+	let (wav, _) = riff::read_chunk(reader)?;
 
 	let mut head = Header::default();
 	let mut data = BitDepth::default();
@@ -318,13 +319,7 @@ pub fn read_wav(p: &Path) -> std::io::Result<(Header, BitDepth)> {
 /// * The file couldn't be opened or written to.
 /// * The path to the desired file destination couldn't be created.
 /// * The given BitDepth is `BitDepth::Empty`
-pub fn write_wav(header: Header, track: BitDepth, p: &Path) -> std::io::Result<()> {
-	use std::fs::File;
-
-	if let Some(i) = p.to_string_lossy().find('/') {
-		std::fs::create_dir_all(String::from(p.to_string_lossy().split_at(i).0))?;
-	}
-
+pub fn write_wav(header: Header, track: BitDepth, writer: &mut dyn Write) -> std::io::Result<()> {
 	let w_id = riff::ChunkId::new("WAVE").unwrap();
 
 	let h_id = riff::ChunkId::new("fmt ").unwrap();
@@ -356,9 +351,8 @@ pub fn write_wav(header: Header, track: BitDepth, p: &Path) -> std::io::Result<(
 	let d_dat = riff::Chunk::new_data(d_id, d_vec);
 
 	let r = riff::Chunk::new_riff(w_id, vec![h_dat, d_dat]);
-	let mut f = File::create(p)?;
 
-	riff::write_chunk(&mut f, &r)?;
+	riff::write_chunk(writer, &r)?;
 
 	Ok(())
 }
