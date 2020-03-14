@@ -5,11 +5,11 @@ readme = "README.md"
 documentation = "https://docs.rs/wav"
 repository = "https://github.com/Fluhzar/WAV"
 license = "LGPL-3.0"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Fluhzar <fluhzar@pm.me>"]
 edition = "2018"
 keywords = ["audio", "file", "file-format", "file-io"]
-categories = ["filesystem", "multimedia::audio", "parsing"]
+categories = ["data-structures", "filesystem", "multimedia::audio"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
