@@ -5,6 +5,7 @@
 //! ## Example
 //!
 //! ```rust
+//! # fn main() -> std::io::Result<()> {
 //! use std::fs::File;
 //! use std::path::Path;
 //!
@@ -13,6 +14,8 @@
 //!
 //! let mut out_file = File::create(Path::new("data/sine.wav"))?;
 //! wav::write_wav(header, data, &mut out_file)?;
+//! # Ok(())
+//! # }
 //! ```
 
 use riff;
