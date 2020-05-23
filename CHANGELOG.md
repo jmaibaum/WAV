@@ -1,8 +1,13 @@
 # WAV
 
+## Version 0.4.0
+
+* Changed `read_wav` to `read` and `write_wav` to `write`.
+* Updated documentation.
+
 ## Version 0.3.0
 
-* Change read_wav and write_wav to accept generic IO types.
+* Change `read_wav` and `write_wav` to accept generic IO types.
 * Changed an error message.
 
 ## Version 0.2.0
