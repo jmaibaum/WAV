@@ -239,7 +239,7 @@ impl std::convert::TryInto<Vec<i32>> for BitDepth {
 /// * The data isn't RIFF data.
 /// * The wave data is malformed.
 /// * The wave header specifies a compressed data format.
-pub fn read_wav(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
+pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
     let (wav, _) = riff::read_chunk(reader)?;
 
     let mut head = Header::default();
@@ -347,7 +347,7 @@ pub fn read_wav(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
 /// * Any error occurring from the `writer` parameter during writing.
 /// * The path to the desired file destination couldn't be created.
 /// * The given BitDepth is `BitDepth::Empty`
-pub fn write_wav(header: Header, track: BitDepth, writer: &mut dyn Write) -> std::io::Result<()> {
+pub fn write(header: Header, track: BitDepth, writer: &mut dyn Write) -> std::io::Result<()> {
     let w_id = riff::ChunkId::new("WAVE").unwrap();
 
     let h_id = riff::ChunkId::new("fmt ").unwrap();
