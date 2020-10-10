@@ -1,5 +1,9 @@
 # WAV
 
+## Version 0.4.1
+
+* Fixed issue of using index-access of chunk instead of iterator, causing issues if there are chunks between "fmt " and "data"
+
 ## Version 0.4.0
 
 * Changed `read_wav` to `read` and `write_wav` to `write`.
