@@ -277,7 +277,7 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
                 for c in &subchunks {
                     // Check for `data` chunk
                     if c.id.as_str() == "data" {
-                        if let riff::ChunkContent::Subchunk(v) = &subchunks[1].content {
+                        if let riff::ChunkContent::Subchunk(v) = &c.content {
                             match head.bits_per_sample {
                                 8 => {
                                     data = BitDepth::Eight(v.clone());
