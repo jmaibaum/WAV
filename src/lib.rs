@@ -100,10 +100,10 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
                                     while i < v.len() {
                                         for _ in 0..head.channel_count {
                                             sam.push(i32::from_le_bytes([
-                                                v[i],
+                                                0,
+                                                v[i    ],
                                                 v[i + 1],
                                                 v[i + 2],
-                                                0,
                                             ]));
                                             i += 3;
                                         }
@@ -171,7 +171,7 @@ pub fn write(header: Header, track: BitDepth, writer: &mut dyn Write) -> std::io
         BitDepth::TwentyFour(v) => {
             for s in v {
                 let mut v = Vec::new();
-                v.extend(&s.to_le_bytes()[0..3]);
+                v.extend(&s.to_le_bytes()[1..4]);
                 d_vec.append(&mut v);
             }
         }

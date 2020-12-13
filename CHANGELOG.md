@@ -1,5 +1,10 @@
 # WAV
 
+## Version 0.4.2
+
+* Refactored code to be a bit more clear.
+* Fixed incorrect endian-ness of the 24-bit reading and writing.
+
 ## Version 0.4.1
 
 * Fixed issue of using index-access of chunk instead of iterator, causing issues if there are chunks between "fmt " and "data"

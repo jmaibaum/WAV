@@ -11,7 +11,7 @@ Cargo.lock
 
 # User-added ignores:
 
-data/output.wav
+data/output*.wav
 .vscode
 
 # Ignores for macOS:
