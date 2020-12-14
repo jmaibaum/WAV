@@ -18,6 +18,7 @@
 //! # }
 //! ```
 
+#![deny(broken_intra_doc_links)]
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
 

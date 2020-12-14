@@ -16,7 +16,7 @@ impl Header {
     ///
     /// # Note
     ///
-    /// While the `read` and `write` functions only support uncompressed PCM for
+    /// While the [`read`][0] and [`write`][1] functions only support uncompressed PCM for
     /// the audio format, the option is given here to select any audio format for
     /// custom implementations of wave features.
     ///
@@ -32,6 +32,9 @@ impl Header {
     /// ```
     /// let h = wav::Header::new(1, 2, 48_000, 16);
     /// ```
+    ///
+    /// [0]: crate::read
+    /// [1]: crate::write
     pub fn new(af: u16, cc: u16, r: u32, bps: u16) -> Header {
         Header {
             audio_format: af,
