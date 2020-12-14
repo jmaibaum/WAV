@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 /// Enum listing the supported bit-depths and containers for the samples at each depth.
 #[derive(Debug, PartialEq, Clone)]
 pub enum BitDepth {
@@ -33,48 +35,41 @@ impl From<Vec<i32>> for BitDepth {
     }
 }
 
-impl std::convert::TryInto<Vec<u8>> for BitDepth {
+impl TryFrom<BitDepth> for Vec<u8> {
     type Error = &'static str;
 
-    /// Attempts to create a vector from the object.
-    ///
     /// # Errors
     ///
-    /// This function fails if `self` is not `BitDepth::Eight`.
-    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
-        if let BitDepth::Eight(v) = self {
+    /// This function fails if `value` is not `BitDepth::Eight`.
+    fn try_from(value: BitDepth) -> Result<Self, Self::Error> {
+        if let BitDepth::Eight(v) = value {
             Ok(v)
         } else {
             Err("Bit depth is not 8")
         }
     }
 }
-impl std::convert::TryInto<Vec<i16>> for BitDepth {
+
+impl TryFrom<BitDepth> for Vec<i16> {
     type Error = &'static str;
 
-    /// Attempts to create a vector from the object.
-    ///
     /// # Errors
     ///
-    /// This function fails if `self` is not `BitDepth::Sixteen`.
-    fn try_into(self) -> Result<Vec<i16>, Self::Error> {
-        if let BitDepth::Sixteen(v) = self {
+    /// This function fails if `value` is not `BitDepth::Sixteen`.
+    fn try_from(value: BitDepth) -> Result<Self, Self::Error> {
+        if let BitDepth::Sixteen(v) = value {
             Ok(v)
         } else {
             Err("Bit depth is not 16")
         }
     }
 }
-impl std::convert::TryInto<Vec<i32>> for BitDepth {
+
+impl TryFrom<BitDepth> for Vec<i32> {
     type Error = &'static str;
 
-    /// Attempts to create a vector from the object.
-    ///
-    /// # Errors
-    ///
-    /// This function fails if `self` is not `BitDepth::TwentyFour`.
-    fn try_into(self) -> Result<Vec<i32>, Self::Error> {
-        if let BitDepth::TwentyFour(v) = self {
+    fn try_from(value: BitDepth) -> Result<Self, Self::Error> {
+        if let BitDepth::TwentyFour(v) = value {
             Ok(v)
         } else {
             Err("Bit depth is not 24")
