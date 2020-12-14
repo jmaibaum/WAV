@@ -47,37 +47,30 @@ impl Header {
     }
 }
 
-impl Into<[u8; 16]> for Header {
-    /// Converts the Header object into a vector of its bytes.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let h:[u8;16] = wav::Header::new(1, 2, 48_000, 16).into();
-    /// ```
-    fn into(self) -> [u8; 16] {
+impl From<Header> for [u8; 16] {
+    fn from(h: Header) -> Self {
         let mut v: [u8; 16] = [0; 16];
 
-        let b = self.audio_format.to_le_bytes();
+        let b = h.audio_format.to_le_bytes();
         v[0] = b[0];
         v[1] = b[1];
-        let b = self.channel_count.to_le_bytes();
+        let b = h.channel_count.to_le_bytes();
         v[2] = b[0];
         v[3] = b[1];
-        let b = self.sampling_rate.to_le_bytes();
+        let b = h.sampling_rate.to_le_bytes();
         v[4] = b[0];
         v[5] = b[1];
         v[6] = b[2];
         v[7] = b[3];
-        let b = self.bytes_per_second.to_le_bytes();
+        let b = h.bytes_per_second.to_le_bytes();
         v[8] = b[0];
         v[9] = b[1];
         v[10] = b[2];
         v[11] = b[3];
-        let b = self.bytes_per_sample.to_le_bytes();
+        let b = h.bytes_per_sample.to_le_bytes();
         v[12] = b[0];
         v[13] = b[1];
-        let b = self.bits_per_sample.to_le_bytes();
+        let b = h.bits_per_sample.to_le_bytes();
         v[14] = b[0];
         v[15] = b[1];
 
