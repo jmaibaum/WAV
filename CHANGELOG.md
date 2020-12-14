@@ -4,6 +4,7 @@
 
 * Refactored code to be a bit more clear.
 * Fixed incorrect endian-ness of the 24-bit reading and writing.
+* Changed `Header::from::<&[u8]>` to `Header::try_from::<&[u8]>` for safety.
 
 ## Version 0.4.1
 

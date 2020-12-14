@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 /// Structure for the "fmt " chunk of wave files, specifying key information
 /// about the enclosed data. This struct supports only PCM data, which is to
 /// say there is no extra members for compressed format data.
@@ -79,12 +81,6 @@ impl From<Header> for [u8; 16] {
 }
 
 impl From<[u8; 16]> for Header {
-    /// Converts an array of 16 raw bytes into a Header object. Intended for
-    /// use with bytes read in from wave files.
-    ///
-    /// # Parameters
-    ///
-    /// * `v` - The raw bytes to convert from.
     fn from(v: [u8; 16]) -> Self {
         let audio_format = u16::from_le_bytes([v[0], v[1]]);
         let channel_count = u16::from_le_bytes([v[2], v[3]]);
@@ -104,19 +100,19 @@ impl From<[u8; 16]> for Header {
     }
 }
 
-impl From<&[u8]> for Header {
-    /// Converts a slice of raw bytes into a Header object.
+impl TryFrom<&[u8]> for Header {
+    type Error = &'static str;
+
+    /// # Errors
     ///
-    /// # Panics
-    ///
-    /// This function will panic if the given slice is smaller than 16 bytes.
-    ///
-    /// # Parameters
-    ///
-    /// * `v` - The slice to convert from.
-    fn from(v: &[u8]) -> Self {
-        let mut a: [u8; 16] = [0; 16];
-        a.copy_from_slice(&v[0..16]);
-        Header::from(a)
+    /// This function will return an error if the given slice is smaller than 16 bytes.
+    fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
+        if v.len() < 16 {
+            Err("Slice is smaller than the minimum-required 16 bytes")
+        } else {
+            let mut a: [u8; 16] = [0; 16];
+            a.copy_from_slice(&v[0..16]);
+            Ok(Header::from(a))
+        }
     }
 }
