@@ -47,11 +47,35 @@ use tuple_iterator::{PairIter, TripletIter};
 /// * The data isn't RIFF data.
 /// * The wave data is malformed.
 /// * The wave header specifies a compressed data format.
-pub fn read(reader: &mut dyn Read) -> io::Result<(Header, BitDepth)> {
-    let (wav, _) = riff::read_chunk(reader)?;
+pub fn read<R>(reader: &mut R) -> io::Result<(Header, BitDepth)>
+where
+    R: Read + io::Seek,
+{
+    let wav = riff::Chunk::read(reader, 0)?;
+
+    let form_type = wav.read_type(reader)?;
+
+    if form_type.as_str() != "WAVE" {
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
+            "RIFF file type not \"WAVE\"",
+        ));
+    }
 
     let mut head = Header::default();
     let mut data = BitDepth::default();
+
+    for c in wav.iter(reader) {
+        if c.id().as_str() == "fmt " {
+            // Header chunk
+            let header_bytes = c.read_contents(reader)?;
+        } else if c.id().as_str() == "data" {
+            // Data chunk
+            let data_bytes = c.read_contents(reader)?;
+        } else {
+            // Unknown chunk
+        }
+    }
 
     match wav.content {
         riff::ChunkContent::List {
