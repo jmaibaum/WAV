@@ -63,110 +63,62 @@ where
     }
 
     let mut head = Header::default();
-    let mut data = BitDepth::default();
+    let mut head_filled = false;
 
     for c in wav.iter(reader) {
         if c.id().as_str() == "fmt " {
-            // Header chunk
+            // Read header contents
             let header_bytes = c.read_contents(reader)?;
-        } else if c.id().as_str() == "data" {
-            // Data chunk
-            let data_bytes = c.read_contents(reader)?;
-        } else {
-            // Unknown chunk
+            head = Header::try_from(header_bytes.as_slice())
+                .map_err(
+                    |e| io::Error::new(
+                        io::ErrorKind::Other,
+                        e
+                    )
+                )?;
+
+            // Return error if not using PCM
+            if head.audio_format != 1 {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    "Unsupported data format, data is not in uncompressed PCM format, aborting",
+                ));
+            }
+
+            head_filled = true;
+            break;
         }
     }
 
-    match wav.content {
-        riff::ChunkContent::List {
-            form_type,
-            subchunks,
-        } => {
-            if form_type.as_str() != "WAVE" {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "RIFF file type not \"WAVE\"",
-                ));
-            } else {
-                // Get the header from the first chunk
-                for c in &subchunks {
-                    // Check for `fmt ` chunk
-                    if c.id.as_str() == "fmt " {
-                        if let riff::ChunkContent::Subchunk(v) = &c.content {
-                            head = Header::try_from(
-                                v.as_slice()
-                            ).map_err(
-                                |e| io::Error::new(
-                                    io::ErrorKind::Other,
-                                    e
-                                )
-                            )?;
-                        }
-                    }
-                }
-                // Return error if not using PCM
-                if head.audio_format != 1 {
+    if !head_filled {
+        return Err(
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                "RIFF data is missing the \"fmt \" chunk, aborting"
+            )
+        );
+    }
+
+    let mut data = BitDepth::default();
+
+    for c in wav.iter(reader) {
+        if c.id().as_str() == "data" {
+            // Read data contents
+            let data_bytes = c.read_contents(reader)?;
+
+            data = match head.bits_per_sample {
+                8 => BitDepth::Eight(data_bytes.clone()),
+                16 => BitDepth::Sixteen(data_bytes.chunks_exact(2).map(|i| i16::from_le_bytes([i[0], i[1]])).collect()),
+                24 => BitDepth::TwentyFour(data_bytes.chunks_exact(3).map(|i| i32::from_le_bytes([0, i[0], i[1], i[2]])).collect()),
+                _ => {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,
-                        "File does not use uncompressed PCM data format",
-                    ));
-                }
-
-                // Get the data from the second chunk
-                for c in &subchunks {
-                    // Check for `data` chunk
-                    if c.id.as_str() == "data" {
-                        if let riff::ChunkContent::Subchunk(v) = &c.content {
-                            match head.bits_per_sample {
-                                8 => {
-                                    data = BitDepth::Eight(v.clone());
-                                }
-                                16 => {
-                                    let mut i = 0;
-                                    let mut sam = Vec::new();
-                                    while i < v.len() {
-                                        for _ in 0..head.channel_count {
-                                            sam.push(i16::from_le_bytes([v[i], v[i + 1]]));
-                                            i += 2;
-                                        }
-                                    }
-                                    data = BitDepth::Sixteen(sam);
-                                }
-                                24 => {
-                                    let mut i = 0;
-                                    let mut sam = Vec::new();
-                                    while i < v.len() {
-                                        for _ in 0..head.channel_count {
-                                            sam.push(i32::from_le_bytes([
-                                                0,
-                                                v[i    ],
-                                                v[i + 1],
-                                                v[i + 2],
-                                            ]));
-                                            i += 3;
-                                        }
-                                    }
-                                    data = BitDepth::TwentyFour(sam);
-                                }
-                                _ => {
-                                    return Err(io::Error::new(
-                                        io::ErrorKind::Other,
-                                        "Unsupported bit depth",
-                                    ))
-                                }
-                            };
-                        }
-                    }
+                        "Unsupported bit depth",
+                    ))
                 }
             }
         }
-        _ => {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "File not a WAVE file",
-            ))
-        }
-    };
+    }
 
     if data == BitDepth::Empty {
         return Err(io::Error::new(
