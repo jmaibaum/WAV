@@ -23,7 +23,10 @@
 #![warn(clippy::pedantic)]
 
 use riff;
-use std::{convert::TryFrom, io::{Read, Write}};
+use std::{
+    convert::TryFrom,
+    io::{self, Read, Write},
+};
 
 pub mod header;
 pub use header::Header;
@@ -44,7 +47,7 @@ use tuple_iterator::{PairIter, TripletIter};
 /// * The data isn't RIFF data.
 /// * The wave data is malformed.
 /// * The wave header specifies a compressed data format.
-pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
+pub fn read(reader: &mut dyn Read) -> io::Result<(Header, BitDepth)> {
     let (wav, _) = riff::read_chunk(reader)?;
 
     let mut head = Header::default();
@@ -56,8 +59,8 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
             subchunks,
         } => {
             if form_type.as_str() != "WAVE" {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::Other,
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
                     "RIFF file type not \"WAVE\"",
                 ));
             } else {
@@ -66,21 +69,21 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
                     // Check for `fmt ` chunk
                     if c.id.as_str() == "fmt " {
                         if let riff::ChunkContent::Subchunk(v) = &c.content {
-                            if let Ok(h) = Header::try_from(v.as_slice()) {
-                                head = h;
-                            } else {
-                                return Err(std::io::Error::new(
-                                    std::io::ErrorKind::Other,
-                                    "WAVE \"fmt \" chunk is malformed, cannot continue",
-                                ))
-                            }
+                            head = Header::try_from(
+                                v.as_slice()
+                            ).map_err(
+                                |e| io::Error::new(
+                                    io::ErrorKind::Other,
+                                    e
+                                )
+                            )?;
                         }
                     }
                 }
                 // Return error if not using PCM
                 if head.audio_format != 1 {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::Other,
+                    return Err(io::Error::new(
+                        io::ErrorKind::Other,
                         "File does not use uncompressed PCM data format",
                     ));
                 }
@@ -122,8 +125,8 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
                                     data = BitDepth::TwentyFour(sam);
                                 }
                                 _ => {
-                                    return Err(std::io::Error::new(
-                                        std::io::ErrorKind::Other,
+                                    return Err(io::Error::new(
+                                        io::ErrorKind::Other,
                                         "Unsupported bit depth",
                                     ))
                                 }
@@ -134,16 +137,16 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
             }
         }
         _ => {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
                 "File not a WAVE file",
             ))
         }
     };
 
     if data == BitDepth::Empty {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
             "Could not parse audio data",
         ));
     }
