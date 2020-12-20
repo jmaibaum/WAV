@@ -1,7 +1,9 @@
 # WAV
 
-## Version 0.4.2
+## Version 0.5.0
 
+* Modified the signature of `wav::write` to borrow the `BitDepth` parameter rather than own.
+* Updated `riff` dependency to `^1.0`.
 * Refactored code to be a bit more clear.
 * Fixed incorrect endian-ness of the 24-bit reading and writing.
 * Changed various `Into` and `TryInto` impls to `From` and `TryFrom` respectively.
