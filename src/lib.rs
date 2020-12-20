@@ -65,7 +65,9 @@ where
     let mut head = Header::default();
     let mut head_filled = false;
 
-    for c in wav.iter(reader) {
+    let chunks: Vec<_> = wav.iter(reader).collect();
+
+    for c in &chunks {
         if c.id().as_str() == "fmt " {
             // Read header contents
             let header_bytes = c.read_contents(reader)?;
@@ -101,7 +103,7 @@ where
 
     let mut data = BitDepth::default();
 
-    for c in wav.iter(reader) {
+    for c in &chunks {
         if c.id().as_str() == "data" {
             // Read data contents
             let data_bytes = c.read_contents(reader)?;
@@ -144,12 +146,15 @@ where
 /// * The given BitDepth is `BitDepth::Empty`.
 ///
 /// [0]: riff::write_chunk
-pub fn write(header: Header, track: &BitDepth, writer: &mut dyn Write) -> std::io::Result<()> {
+pub fn write<W>(header: Header, track: &BitDepth, writer: &mut W) -> std::io::Result<()>
+where
+    W: Write + io::Seek
+{
     let w_id = riff::ChunkId::new("WAVE").unwrap();
 
     let h_id = riff::ChunkId::new("fmt ").unwrap();
     let h_vec: [u8; 16] = header.into();
-    let h_dat = riff::Chunk::new_data(h_id, Vec::from(&h_vec[0..16]));
+    let h_dat = riff::ChunkContents::Data(h_id, Vec::from(&h_vec[0..16]));
 
     let d_id = riff::ChunkId::new("data").unwrap();
     let d_vec = match track {
@@ -177,11 +182,11 @@ pub fn write(header: Header, track: &BitDepth, writer: &mut dyn Write) -> std::i
             )
         ),
     };
-    let d_dat = riff::Chunk::new_data(d_id, d_vec);
+    let d_dat = riff::ChunkContents::Data(d_id, d_vec);
 
-    let r = riff::Chunk::new_riff(w_id, vec![h_dat, d_dat]);
+    let r = riff::ChunkContents::Children(riff::RIFF_ID.clone(), w_id, vec![h_dat, d_dat]);
 
-    riff::write_chunk(writer, &r)?;
+    r.write(writer)?;
 
     Ok(())
 }
