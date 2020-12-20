@@ -113,10 +113,19 @@ where
             // Read data contents
             let data_bytes = c.read_contents(reader)?;
 
+
             data = match head.bits_per_sample {
-                8 => BitDepth::Eight(data_bytes.clone()),
-                16 => BitDepth::Sixteen(data_bytes.chunks_exact(2).map(|i| i16::from_le_bytes([i[0], i[1]])).collect()),
-                24 => BitDepth::TwentyFour(data_bytes.chunks_exact(3).map(|i| i32::from_le_bytes([0, i[0], i[1], i[2]])).collect()),
+                8 => BitDepth::Eight(data_bytes),
+                16 => BitDepth::Sixteen({
+                    let mut tmpv = Vec::with_capacity(data_bytes.len() / 2);
+                    tmpv.extend(data_bytes.chunks_exact(2).map(|i| i16::from_le_bytes([i[0], i[1]])));
+                    tmpv
+                }),
+                24 => BitDepth::TwentyFour({
+                    let mut tmpv = Vec::with_capacity(data_bytes.len() / 3);
+                    tmpv.extend(data_bytes.chunks_exact(3).map(|i| i32::from_le_bytes([0, i[0], i[1], i[2]])));
+                    tmpv
+                }),
                 _ => {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,

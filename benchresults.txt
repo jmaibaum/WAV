@@ -1,0 +1,4 @@
+test read_sine             ... bench:     189,502 ns/iter (+/- 458)
+test read_sine_16bit_48khz ... bench:     104,108 ns/iter (+/- 402)
+test read_sine_24bit_48khz ... bench:     341,720 ns/iter (+/- 18,928)
+test read_sine_8bit_48khz  ... bench:      14,308 ns/iter (+/- 47)
