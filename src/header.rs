@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-/// Structure for the "fmt " chunk of wave files, specifying key information
+/// Structure for the `"fmt "` chunk of wave files, specifying key information
 /// about the enclosed data. This struct supports only PCM data, which is to
 /// say there is no extra members for compressed format data.
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
@@ -16,20 +16,20 @@ pub struct Header {
 impl Header {
     /// Creates a new Header object.
     ///
-    /// # Note
+    /// ## Note
     ///
-    /// While the [`read`][0] and [`write`][1] functions only support uncompressed PCM for
-    /// the audio format, the option is given here to select any audio format for
-    /// custom implementations of wave features.
+    /// While the [`read`][0] and [`write`][1] functions only support
+    /// uncompressed PCM for the audio format, the option is given here to
+    /// select any audio format for custom implementations of wave features.
     ///
-    /// # Parameters
+    /// ## Parameters
     ///
     /// * `af` - Audio format. 1 for uncompressed PCM data.
     /// * `cc` - Channel count, the number of channels each sample has. Generally 1 (mono) or 2 (stereo).
     /// * `r` - Sampling rate (e.g. 44.1kHz, 48kHz, 96kHz, etc.).
     /// * `bps` - Number of bits in each (sub-channel) sample. Generally 8, 16, or 24.
     ///
-    /// # Example
+    /// ## Example
     ///
     /// ```
     /// let h = wav::Header::new(1, 2, 48_000, 16);
@@ -103,7 +103,7 @@ impl From<[u8; 16]> for Header {
 impl TryFrom<&[u8]> for Header {
     type Error = &'static str;
 
-    /// # Errors
+    /// ## Errors
     ///
     /// This function will return an error if the given slice is smaller than 16 bytes.
     fn try_from(v: &[u8]) -> Result<Self, Self::Error> {

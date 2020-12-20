@@ -1,6 +1,10 @@
 //! # WAV
 //!
-//! This is a crate for reading in and writing out wave files. It supports bit depths of 8, 16, and 24 bits, any number of channels, and uncompressed PCM data. Unfortunately other types of data format (e.g. compressed WAVE files) are not supported. There is also no support for any metadata chunks or any chunks other than the "fmt " and "data" chunks.
+//! This is a crate for reading in and writing out wave files. It supports bit-
+//! depths of 8, 16, and 24 bits, any number of channels, and uncompressed PCM
+//! data. Unfortunately other types of data format (e.g. compressed WAVE files)
+//! are not supported. There is also no support for any metadata chunks or any
+//! chunks other than the "fmt " and "data" chunks.
 //!
 //! ## Example
 //!
@@ -37,16 +41,17 @@ pub use bit_depth::BitDepth;
 mod tuple_iterator;
 use tuple_iterator::{PairIter, TripletIter};
 
-/// Reads in the given `Read` object and attempts to extract the audio data and
+/// Reads in the given `reader` and attempts to extract the audio data and
 /// header from it.
 ///
-/// # Errors
+/// ## Errors
 ///
 /// This function fails under the following circumstances:
 /// * Any error occurring from the `reader` parameter during reading.
 /// * The data isn't RIFF data.
-/// * The wave data is malformed.
 /// * The wave header specifies a compressed data format.
+/// * The wave header specifies an unsupported bit-depth.
+/// * The wave data is malformed, or otherwise couldn't be parsed into samples.
 pub fn read<R>(reader: &mut R) -> io::Result<(Header, BitDepth)>
 where
     R: Read + io::Seek,
@@ -132,17 +137,18 @@ where
     Ok((head, data))
 }
 
-/// Writes the given wav data to the given `Write` object.
+/// Writes the given wav data to the given `writer`.
+///
+/// ## Notes
 ///
 /// Although `track` is a borrowed value, its contents will be formatted into an
 /// owned `Vec<u8>` so that it can be written to the `writer` through
 /// [`riff::write_chunk`][0].
 ///
-/// # Errors
+/// ## Errors
 ///
 /// This function fails under the following circumstances:
 /// * Any error occurring from the `writer` parameter during writing.
-/// * The path to the desired file destination couldn't be created.
 /// * The given BitDepth is `BitDepth::Empty`.
 ///
 /// [0]: riff::write_chunk
