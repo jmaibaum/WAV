@@ -23,13 +23,16 @@
 #![warn(clippy::pedantic)]
 
 use riff;
-use std::io::{Read, Write};
+use std::{convert::TryFrom, io::{Read, Write}};
 
 pub mod header;
 pub use header::Header;
 
 pub mod bit_depth;
 pub use bit_depth::BitDepth;
+
+mod tuple_iterator;
+use tuple_iterator::{PairIter, TripletIter};
 
 /// Reads in the given `Read` object and attempts to extract the audio data and
 /// header from it.
@@ -63,7 +66,14 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
                     // Check for `fmt ` chunk
                     if c.id.as_str() == "fmt " {
                         if let riff::ChunkContent::Subchunk(v) = &c.content {
-                            head = Header::from(v.as_slice());
+                            if let Ok(h) = Header::try_from(v.as_slice()) {
+                                head = h;
+                            } else {
+                                return Err(std::io::Error::new(
+                                    std::io::ErrorKind::Other,
+                                    "WAVE \"fmt \" chunk is malformed, cannot continue",
+                                ))
+                            }
                         }
                     }
                 }
@@ -143,13 +153,19 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
 
 /// Writes the given wav data to the given `Write` object.
 ///
+/// Although `track` is a borrowed value, its contents will be formatted into an
+/// owned `Vec<u8>` so that it can be written to the `writer` through
+/// [`riff::write_chunk`][0].
+///
 /// # Errors
 ///
 /// This function fails under the following circumstances:
 /// * Any error occurring from the `writer` parameter during writing.
 /// * The path to the desired file destination couldn't be created.
 /// * The given BitDepth is `BitDepth::Empty`.
-pub fn write(header: Header, track: BitDepth, writer: &mut dyn Write) -> std::io::Result<()> {
+///
+/// [0]: riff::write_chunk
+pub fn write(header: Header, track: &BitDepth, writer: &mut dyn Write) -> std::io::Result<()> {
     let w_id = riff::ChunkId::new("WAVE").unwrap();
 
     let h_id = riff::ChunkId::new("fmt ").unwrap();
@@ -157,31 +173,30 @@ pub fn write(header: Header, track: BitDepth, writer: &mut dyn Write) -> std::io
     let h_dat = riff::Chunk::new_data(h_id, Vec::from(&h_vec[0..16]));
 
     let d_id = riff::ChunkId::new("data").unwrap();
-    let mut d_vec = Vec::new();
-    match track {
-        BitDepth::Eight(v) => {
-            d_vec = v;
-        }
-        BitDepth::Sixteen(v) => {
-            for s in v {
-                let mut v = Vec::new();
-                v.extend(&s.to_le_bytes());
-                d_vec.append(&mut v);
-            }
-        }
-        BitDepth::TwentyFour(v) => {
-            for s in v {
-                let mut v = Vec::new();
-                v.extend(&s.to_le_bytes()[1..4]);
-                d_vec.append(&mut v);
-            }
-        }
-        _ => {
-            return Err(std::io::Error::new(
+    let d_vec = match track {
+        BitDepth::Eight(v) => v.clone(),
+        BitDepth::Sixteen(v) => v.iter()
+            .flat_map(
+                |s| {
+                    let v = s.to_le_bytes();
+                    PairIter::new((v[0], v[1]))
+                }
+            )
+            .collect::<Vec<_>>(),
+        BitDepth::TwentyFour(v) => v.iter()
+            .flat_map(
+                |s| {
+                    let v = s.to_le_bytes().split_at(1).1.to_owned();
+                    TripletIter::new((v[0], v[1], v[2]))
+                }
+            )
+            .collect::<Vec<_>>(),
+        _ => return Err(
+            std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "Empty audio data given",
-            ))
-        }
+            )
+        ),
     };
     let d_dat = riff::Chunk::new_data(d_id, d_vec);
 
