@@ -13,7 +13,7 @@
 //! let (header, data) = wav::read(&mut inp_file)?;
 //!
 //! let mut out_file = File::create(Path::new("data/output.wav"))?;
-//! wav::write(header, data, &mut out_file)?;
+//! wav::write(header, &data, &mut out_file)?;
 //! # Ok(())
 //! # }
 //! ```
@@ -47,102 +47,80 @@ use tuple_iterator::{PairIter, TripletIter};
 /// * The data isn't RIFF data.
 /// * The wave data is malformed.
 /// * The wave header specifies a compressed data format.
-pub fn read(reader: &mut dyn Read) -> io::Result<(Header, BitDepth)> {
-    let (wav, _) = riff::read_chunk(reader)?;
+pub fn read<R>(reader: &mut R) -> io::Result<(Header, BitDepth)>
+where
+    R: Read + io::Seek,
+{
+    let wav = riff::Chunk::read(reader, 0)?;
+
+    let form_type = wav.read_type(reader)?;
+
+    if form_type.as_str() != "WAVE" {
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
+            "RIFF file type not \"WAVE\"",
+        ));
+    }
 
     let mut head = Header::default();
-    let mut data = BitDepth::default();
+    let mut head_filled = false;
 
-    match wav.content {
-        riff::ChunkContent::List {
-            form_type,
-            subchunks,
-        } => {
-            if form_type.as_str() != "WAVE" {
+    let chunks: Vec<_> = wav.iter(reader).collect();
+
+    for c in &chunks {
+        if c.id().as_str() == "fmt " {
+            // Read header contents
+            let header_bytes = c.read_contents(reader)?;
+            head = Header::try_from(header_bytes.as_slice())
+                .map_err(
+                    |e| io::Error::new(
+                        io::ErrorKind::Other,
+                        e
+                    )
+                )?;
+
+            // Return error if not using PCM
+            if head.audio_format != 1 {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
-                    "RIFF file type not \"WAVE\"",
+                    "Unsupported data format, data is not in uncompressed PCM format, aborting",
                 ));
-            } else {
-                // Get the header from the first chunk
-                for c in &subchunks {
-                    // Check for `fmt ` chunk
-                    if c.id.as_str() == "fmt " {
-                        if let riff::ChunkContent::Subchunk(v) = &c.content {
-                            head = Header::try_from(
-                                v.as_slice()
-                            ).map_err(
-                                |e| io::Error::new(
-                                    io::ErrorKind::Other,
-                                    e
-                                )
-                            )?;
-                        }
-                    }
-                }
-                // Return error if not using PCM
-                if head.audio_format != 1 {
+            }
+
+            head_filled = true;
+            break;
+        }
+    }
+
+    if !head_filled {
+        return Err(
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                "RIFF data is missing the \"fmt \" chunk, aborting"
+            )
+        );
+    }
+
+    let mut data = BitDepth::default();
+
+    for c in &chunks {
+        if c.id().as_str() == "data" {
+            // Read data contents
+            let data_bytes = c.read_contents(reader)?;
+
+            data = match head.bits_per_sample {
+                8 => BitDepth::Eight(data_bytes.clone()),
+                16 => BitDepth::Sixteen(data_bytes.chunks_exact(2).map(|i| i16::from_le_bytes([i[0], i[1]])).collect()),
+                24 => BitDepth::TwentyFour(data_bytes.chunks_exact(3).map(|i| i32::from_le_bytes([0, i[0], i[1], i[2]])).collect()),
+                _ => {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,
-                        "File does not use uncompressed PCM data format",
-                    ));
-                }
-
-                // Get the data from the second chunk
-                for c in &subchunks {
-                    // Check for `data` chunk
-                    if c.id.as_str() == "data" {
-                        if let riff::ChunkContent::Subchunk(v) = &c.content {
-                            match head.bits_per_sample {
-                                8 => {
-                                    data = BitDepth::Eight(v.clone());
-                                }
-                                16 => {
-                                    let mut i = 0;
-                                    let mut sam = Vec::new();
-                                    while i < v.len() {
-                                        for _ in 0..head.channel_count {
-                                            sam.push(i16::from_le_bytes([v[i], v[i + 1]]));
-                                            i += 2;
-                                        }
-                                    }
-                                    data = BitDepth::Sixteen(sam);
-                                }
-                                24 => {
-                                    let mut i = 0;
-                                    let mut sam = Vec::new();
-                                    while i < v.len() {
-                                        for _ in 0..head.channel_count {
-                                            sam.push(i32::from_le_bytes([
-                                                0,
-                                                v[i    ],
-                                                v[i + 1],
-                                                v[i + 2],
-                                            ]));
-                                            i += 3;
-                                        }
-                                    }
-                                    data = BitDepth::TwentyFour(sam);
-                                }
-                                _ => {
-                                    return Err(io::Error::new(
-                                        io::ErrorKind::Other,
-                                        "Unsupported bit depth",
-                                    ))
-                                }
-                            };
-                        }
-                    }
+                        "Unsupported bit depth",
+                    ))
                 }
             }
         }
-        _ => {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "File not a WAVE file",
-            ))
-        }
-    };
+    }
 
     if data == BitDepth::Empty {
         return Err(io::Error::new(
@@ -168,12 +146,15 @@ pub fn read(reader: &mut dyn Read) -> io::Result<(Header, BitDepth)> {
 /// * The given BitDepth is `BitDepth::Empty`.
 ///
 /// [0]: riff::write_chunk
-pub fn write(header: Header, track: &BitDepth, writer: &mut dyn Write) -> std::io::Result<()> {
+pub fn write<W>(header: Header, track: &BitDepth, writer: &mut W) -> std::io::Result<()>
+where
+    W: Write + io::Seek
+{
     let w_id = riff::ChunkId::new("WAVE").unwrap();
 
     let h_id = riff::ChunkId::new("fmt ").unwrap();
     let h_vec: [u8; 16] = header.into();
-    let h_dat = riff::Chunk::new_data(h_id, Vec::from(&h_vec[0..16]));
+    let h_dat = riff::ChunkContents::Data(h_id, Vec::from(&h_vec[0..16]));
 
     let d_id = riff::ChunkId::new("data").unwrap();
     let d_vec = match track {
@@ -201,11 +182,11 @@ pub fn write(header: Header, track: &BitDepth, writer: &mut dyn Write) -> std::i
             )
         ),
     };
-    let d_dat = riff::Chunk::new_data(d_id, d_vec);
+    let d_dat = riff::ChunkContents::Data(d_id, d_vec);
 
-    let r = riff::Chunk::new_riff(w_id, vec![h_dat, d_dat]);
+    let r = riff::ChunkContents::Children(riff::RIFF_ID.clone(), w_id, vec![h_dat, d_dat]);
 
-    riff::write_chunk(writer, &r)?;
+    r.write(writer)?;
 
     Ok(())
 }

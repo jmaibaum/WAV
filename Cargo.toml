@@ -14,4 +14,4 @@ categories = ["data-structures", "filesystem", "multimedia::audio"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-riff = "0.1"
+riff = "^1.0"
