@@ -23,7 +23,10 @@
 #![warn(clippy::pedantic)]
 
 use riff;
-use std::io::{Read, Write};
+use std::{
+    convert::TryFrom,
+    io::{self, Read, Write},
+};
 
 pub mod header;
 pub use header::Header;
@@ -41,7 +44,7 @@ pub use bit_depth::BitDepth;
 /// * The data isn't RIFF data.
 /// * The wave data is malformed.
 /// * The wave header specifies a compressed data format.
-pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
+pub fn read(reader: &mut dyn Read) -> io::Result<(Header, BitDepth)> {
     let (wav, _) = riff::read_chunk(reader)?;
 
     let mut head = Header::default();
@@ -53,8 +56,8 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
             subchunks,
         } => {
             if form_type.as_str() != "WAVE" {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::Other,
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
                     "RIFF file type not \"WAVE\"",
                 ));
             } else {
@@ -63,14 +66,21 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
                     // Check for `fmt ` chunk
                     if c.id.as_str() == "fmt " {
                         if let riff::ChunkContent::Subchunk(v) = &c.content {
-                            head = Header::from(v.as_slice());
+                            head = Header::try_from(
+                                v.as_slice()
+                            ).map_err(
+                                |e| io::Error::new(
+                                    io::ErrorKind::Other,
+                                    e
+                                )
+                            )?;
                         }
                     }
                 }
                 // Return error if not using PCM
                 if head.audio_format != 1 {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::Other,
+                    return Err(io::Error::new(
+                        io::ErrorKind::Other,
                         "File does not use uncompressed PCM data format",
                     ));
                 }
@@ -112,8 +122,8 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
                                     data = BitDepth::TwentyFour(sam);
                                 }
                                 _ => {
-                                    return Err(std::io::Error::new(
-                                        std::io::ErrorKind::Other,
+                                    return Err(io::Error::new(
+                                        io::ErrorKind::Other,
                                         "Unsupported bit depth",
                                     ))
                                 }
@@ -124,16 +134,16 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
             }
         }
         _ => {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
                 "File not a WAVE file",
             ))
         }
     };
 
     if data == BitDepth::Empty {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
             "Could not parse audio data",
         ));
     }
@@ -149,7 +159,7 @@ pub fn read(reader: &mut dyn Read) -> std::io::Result<(Header, BitDepth)> {
 /// * Any error occurring from the `writer` parameter during writing.
 /// * The path to the desired file destination couldn't be created.
 /// * The given BitDepth is `BitDepth::Empty`.
-pub fn write(header: Header, track: BitDepth, writer: &mut dyn Write) -> std::io::Result<()> {
+pub fn write(header: Header, track: BitDepth, writer: &mut dyn Write) -> io::Result<()> {
     let w_id = riff::ChunkId::new("WAVE").unwrap();
 
     let h_id = riff::ChunkId::new("fmt ").unwrap();
@@ -177,8 +187,8 @@ pub fn write(header: Header, track: BitDepth, writer: &mut dyn Write) -> std::io
             }
         }
         _ => {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
                 "Empty audio data given",
             ))
         }
