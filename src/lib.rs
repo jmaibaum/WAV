@@ -56,94 +56,8 @@ pub fn read<R>(reader: &mut R) -> io::Result<(Header, BitDepth)>
 where
     R: Read + io::Seek,
 {
-    let wav = riff::Chunk::read(reader, 0)?;
-
-    let form_type = wav.read_type(reader)?;
-
-    if form_type.as_str() != "WAVE" {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            "RIFF file type not \"WAVE\"",
-        ));
-    }
-
-    let mut head = Header::default();
-    let mut head_filled = false;
-
-    let chunks: Vec<_> = wav.iter(reader).collect();
-
-    for c in &chunks {
-        if c.id().as_str() == "fmt " {
-            // Read header contents
-            let header_bytes = c.read_contents(reader)?;
-            head = Header::try_from(header_bytes.as_slice())
-                .map_err(
-                    |e| io::Error::new(
-                        io::ErrorKind::Other,
-                        e
-                    )
-                )?;
-
-            // Return error if not using PCM
-            if head.audio_format != 1 {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "Unsupported data format, data is not in uncompressed PCM format, aborting",
-                ));
-            }
-
-            head_filled = true;
-            break;
-        }
-    }
-
-    if !head_filled {
-        return Err(
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                "RIFF data is missing the \"fmt \" chunk, aborting"
-            )
-        );
-    }
-
-    let mut data = BitDepth::default();
-
-    for c in &chunks {
-        if c.id().as_str() == "data" {
-            // Read data contents
-            let data_bytes = c.read_contents(reader)?;
-
-
-            data = match head.bits_per_sample {
-                8 => BitDepth::Eight(data_bytes),
-                16 => BitDepth::Sixteen({
-                    let mut tmpv = Vec::with_capacity(data_bytes.len() / 2);
-                    tmpv.extend(data_bytes.chunks_exact(2).map(|i| i16::from_le_bytes([i[0], i[1]])));
-                    tmpv
-                }),
-                24 => BitDepth::TwentyFour({
-                    let mut tmpv = Vec::with_capacity(data_bytes.len() / 3);
-                    tmpv.extend(data_bytes.chunks_exact(3).map(|i| i32::from_le_bytes([0, i[0], i[1], i[2]])));
-                    tmpv
-                }),
-                _ => {
-                    return Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        "Unsupported bit depth",
-                    ))
-                }
-            }
-        }
-    }
-
-    if data == BitDepth::Empty {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            "Could not parse audio data",
-        ));
-    }
-
-    Ok((head, data))
+    let header = read_header(reader)?;
+    Ok((header, read_data(reader, &header)?))
 }
 
 /// Writes the given wav data to the given `writer`.
@@ -204,4 +118,105 @@ where
     r.write(writer)?;
 
     Ok(())
+}
+
+fn read_header<R>(reader: &mut R) -> io::Result<Header>
+where
+    R: Read + io::Seek,
+{
+    let wav = verify_wav_file(reader)?;
+
+    for c in wav.iter(reader) {
+        if c.id().as_str() == "fmt " {
+            // Read header contents
+            let header_bytes = c.read_contents(reader)?;
+            let header = Header::try_from(header_bytes.as_slice())
+                .map_err(
+                    |e| io::Error::new(
+                        io::ErrorKind::Other,
+                        e
+                    )
+                )?;
+
+            // Return error if not using PCM
+            if header.audio_format != 1 {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    "Unsupported data format, data is not in uncompressed PCM format, aborting",
+                ));
+            }
+
+            return Ok(header);
+        }
+    }
+
+    Err(
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            "RIFF data is missing the \"fmt \" chunk, aborting"
+        )
+    )
+}
+
+fn read_data<R>(reader: &mut R, header: &Header) -> io::Result<BitDepth>
+where
+    R: Read + io::Seek,
+{
+    let wav = verify_wav_file(reader)?;
+
+    for c in wav.iter(reader) {
+        if c.id().as_str() == "data" {
+            // Read data contents
+            let data_bytes = c.read_contents(reader)?;
+
+            return Ok(
+                match header.bits_per_sample {
+                    8 => BitDepth::Eight(data_bytes),
+                    16 => BitDepth::Sixteen({
+                        let mut tmpv = Vec::with_capacity(data_bytes.len() / 2);
+                        tmpv.extend(data_bytes.chunks_exact(2).map(|i| i16::from_le_bytes([i[0], i[1]])));
+                        tmpv
+                    }),
+                    24 => BitDepth::TwentyFour({
+                        let mut tmpv = Vec::with_capacity(data_bytes.len() / 3);
+                        tmpv.extend(data_bytes.chunks_exact(3).map(|i| i32::from_le_bytes([0, i[0], i[1], i[2]])));
+                        tmpv
+                    }),
+                    _ => {
+                        return Err(io::Error::new(
+                            io::ErrorKind::Other,
+                            "Unsupported bit depth",
+                        ));
+                    }
+                }
+            );
+        }
+    }
+
+    Err(
+        io::Error::new(
+            io::ErrorKind::Other,
+            "Could not parse audio data",
+        )
+    )
+}
+
+fn verify_wav_file<R>(reader: &mut R) -> io::Result<riff::Chunk>
+where
+    R: Read + io::Seek,
+{
+    let wav = riff::Chunk::read(reader, 0)?;
+
+    let form_type = wav.read_type(reader)?;
+
+    if form_type.as_str() != "WAVE" {
+        Err(
+            io::Error::new(
+                io::ErrorKind::Other,
+                "RIFF file type not \"WAVE\"",
+            )
+        )
+    } else {
+        Ok(wav)
+    }
 }
