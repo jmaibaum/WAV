@@ -90,7 +90,7 @@ impl TryFrom<BitDepth> for Vec<f32> {
 
     /// ## Errors
     ///
-    /// This function fails if `value` is not `BitDepth::Eight`.
+    /// This function fails if `value` is not `BitDepth::ThirtyTwoFloat`.
     fn try_from(value: BitDepth) -> Result<Self, Self::Error> {
         if let BitDepth::ThirtyTwoFloat(v) = value {
             Ok(v)
