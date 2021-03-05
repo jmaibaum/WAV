@@ -1,5 +1,10 @@
 # WAV
 
+## Version 0.6.0
+
+* Added benchmark tests under the `benches` folder [faddde7](https://github.com/Fluhzar/WAV/commit/faddde76cece1be530653d9e305fcad798627d54)
+* Added support for 32-bit IEEE floating point data types [1117830](https://github.com/Fluhzar/WAV/commit/111783032030900464ead46be5c8924cac67e114)
+
 ## Version 0.5.0
 
 * Modified the signature of `wav::write` to borrow the `BitDepth` parameter rather than own.
