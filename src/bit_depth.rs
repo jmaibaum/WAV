@@ -6,6 +6,7 @@ pub enum BitDepth {
     Eight(Vec<u8>),
     Sixteen(Vec<i16>),
     TwentyFour(Vec<i32>),
+    ThirtyTwoFloat(Vec<f32>),
     Empty,
 }
 
@@ -30,6 +31,12 @@ impl From<Vec<i16>> for BitDepth {
 impl From<Vec<i32>> for BitDepth {
     fn from(v: Vec<i32>) -> Self {
         BitDepth::TwentyFour(v)
+    }
+}
+
+impl From<Vec<f32>> for BitDepth {
+    fn from(v: Vec<f32>) -> Self {
+        BitDepth::ThirtyTwoFloat(v)
     }
 }
 
@@ -74,6 +81,21 @@ impl TryFrom<BitDepth> for Vec<i32> {
             Ok(v)
         } else {
             Err("Bit-depth is not 24")
+        }
+    }
+}
+
+impl TryFrom<BitDepth> for Vec<f32> {
+    type Error = &'static str;
+
+    /// ## Errors
+    ///
+    /// This function fails if `value` is not `BitDepth::ThirtyTwoFloat`.
+    fn try_from(value: BitDepth) -> Result<Self, Self::Error> {
+        if let BitDepth::ThirtyTwoFloat(v) = value {
+            Ok(v)
+        } else {
+            Err("Bit-depth is not 32bit float")
         }
     }
 }

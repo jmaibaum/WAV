@@ -24,6 +24,12 @@ mod tests {
         let mut writer = File::create(std::path::Path::new("data/output_24bit48kHz.wav"))?;
         wav::write(h, &b, &mut writer)?;
 
+        let mut reader = File::open(std::path::Path::new("data/sine_32bitfloat48kHz.wav"))?;
+        let (h, b) = wav::read(&mut reader)?;
+
+        let mut writer = File::create(std::path::Path::new("data/output_32bitfloat48kHz.wav"))?;
+        wav::write(h, &b, &mut writer)?;
+
         Ok(())
     }
 }

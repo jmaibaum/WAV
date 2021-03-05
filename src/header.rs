@@ -1,5 +1,8 @@
 use std::convert::TryFrom;
 
+pub const WAV_FORMAT_PCM: u16 = 0x01;
+pub const WAV_FORMAT_IEEE_FLOAT: u16 = 0x03;
+
 /// Structure for the `"fmt "` chunk of wave files, specifying key information
 /// about the enclosed data. This struct supports only PCM data, which is to
 /// say there is no extra members for compressed format data.
@@ -24,27 +27,35 @@ impl Header {
     ///
     /// ## Parameters
     ///
-    /// * `af` - Audio format. 1 for uncompressed PCM data.
-    /// * `cc` - Channel count, the number of channels each sample has. Generally 1 (mono) or 2 (stereo).
-    /// * `r` - Sampling rate (e.g. 44.1kHz, 48kHz, 96kHz, etc.).
-    /// * `bps` - Number of bits in each (sub-channel) sample. Generally 8, 16, or 24.
+    /// * `audio_format` - Audio format. Only WAV_FORMAT_PCM (0x01) and WAV_FORMAT_IEEE_FLOAT
+    /// (0x03) are supported.
+    /// * `channel_count` - Channel count, the number of channels each sample has. Generally 1
+    /// (mono) or 2 (stereo).
+    /// * `sampling_rate` - Sampling rate (e.g. 44.1kHz, 48kHz, 96kHz, etc.).
+    /// * `bits_per_sample` - Number of bits in each (sub-channel) sample. Generally 8, 16, 24, or
+    /// 32.
     ///
     /// ## Example
     ///
     /// ```
-    /// let h = wav::Header::new(1, 2, 48_000, 16);
+    /// let h = wav::Header::new(wav::Header::WAV_FORMAT_PCM, 2, 48_000, 16);
     /// ```
     ///
     /// [0]: crate::read
     /// [1]: crate::write
-    pub fn new(af: u16, cc: u16, r: u32, bps: u16) -> Header {
+    pub fn new(
+        audio_format: u16,
+        channel_count: u16,
+        sampling_rate: u32,
+        bits_per_sample: u16,
+    ) -> Header {
         Header {
-            audio_format: af,
-            channel_count: cc,
-            sampling_rate: r,
-            bytes_per_second: (((bps >> 3) * cc) as u32) * r,
-            bytes_per_sample: ((bps >> 3) * cc) as u16,
-            bits_per_sample: bps,
+            audio_format,
+            channel_count,
+            sampling_rate,
+            bits_per_sample,
+            bytes_per_second: (((bits_per_sample >> 3) * channel_count) as u32) * sampling_rate,
+            bytes_per_sample: ((bits_per_sample >> 3) * channel_count) as u16,
         }
     }
 }
