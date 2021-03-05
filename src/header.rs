@@ -1,12 +1,19 @@
+//! Contains items responsible for dealing with the `"fmt "` chunk of wave files.
+
 use std::convert::TryFrom;
 
+/// Value signifying PCM data.
 pub const WAV_FORMAT_PCM: u16 = 0x01;
+/// Value signifying IEEE float data.
 pub const WAV_FORMAT_IEEE_FLOAT: u16 = 0x03;
 
 /// Structure for the `"fmt "` chunk of wave files, specifying key information
-/// about the enclosed data. This struct supports only PCM data, which is to
-/// say there is no extra members for compressed format data.
+/// about the enclosed data.
+///
+/// This struct supports only PCM and IEEE float data, which is to say there is
+/// no extra members for compressed format data.
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+#[allow(missing_docs)]
 pub struct Header {
     pub audio_format: u16,
     pub channel_count: u16,
@@ -21,28 +28,25 @@ impl Header {
     ///
     /// ## Note
     ///
-    /// While the [`read`][0] and [`write`][1] functions only support
-    /// uncompressed PCM for the audio format, the option is given here to
+    /// While the [`crate::read`] and [`crate::write`] functions only support
+    /// uncompressed PCM/IEEE for the audio format, the option is given here to
     /// select any audio format for custom implementations of wave features.
     ///
     /// ## Parameters
     ///
-    /// * `audio_format` - Audio format. Only WAV_FORMAT_PCM (0x01) and WAV_FORMAT_IEEE_FLOAT
-    /// (0x03) are supported.
-    /// * `channel_count` - Channel count, the number of channels each sample has. Generally 1
-    /// (mono) or 2 (stereo).
+    /// * `audio_format` - Audio format. Only [`WAV_FORMAT_PCM`] (0x01) and
+    ///                    [`WAV_FORMAT_IEEE_FLOAT`] (0x03) are supported.
+    /// * `channel_count` - Channel count, the number of channels each sample
+    ///                     has. Generally 1 (mono) or 2 (stereo).
     /// * `sampling_rate` - Sampling rate (e.g. 44.1kHz, 48kHz, 96kHz, etc.).
-    /// * `bits_per_sample` - Number of bits in each (sub-channel) sample. Generally 8, 16, 24, or
-    /// 32.
+    /// * `bits_per_sample` - Number of bits in each (sub-channel) sample.
+    ///                       Generally 8, 16, 24, or 32.
     ///
     /// ## Example
     ///
     /// ```
     /// let h = wav::Header::new(wav::Header::WAV_FORMAT_PCM, 2, 48_000, 16);
     /// ```
-    ///
-    /// [0]: crate::read
-    /// [1]: crate::write
     pub fn new(
         audio_format: u16,
         channel_count: u16,

@@ -1,7 +1,10 @@
+//! Contains items for dealing with the `"data"` chunk of wave files.
+
 use std::convert::TryFrom;
 
 /// Enum listing the supported bit-depths and containers for the samples at each depth.
 #[derive(Debug, PartialEq, Clone)]
+#[allow(missing_docs)]
 pub enum BitDepth {
     Eight(Vec<u8>),
     Sixteen(Vec<i16>),
