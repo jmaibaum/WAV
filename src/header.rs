@@ -45,7 +45,7 @@ impl Header {
     /// ## Example
     ///
     /// ```
-    /// let h = wav::Header::new(wav::Header::WAV_FORMAT_PCM, 2, 48_000, 16);
+    /// let h = wav::Header::new(wav::header::WAV_FORMAT_PCM, 2, 48_000, 16);
     /// ```
     pub fn new(
         audio_format: u16,
