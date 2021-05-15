@@ -20,6 +20,7 @@ impl BitDepth {
         matches!(self, Self::Eight(..))
     }
 
+    /// Returns the inner value of the enum if it is [`Self::Eight`].
     #[must_use]
     pub fn as_eight(&self) -> Option<&Vec<u8>> {
         if let Self::Eight(v) = self {
@@ -29,6 +30,11 @@ impl BitDepth {
         }
     }
 
+    /// Attempts to convert into the inner value.
+    ///
+    /// ## Errors
+    ///
+    /// Fails if enum isn't the [`Self::Eight`] variant.
     pub fn try_into_eight(self) -> Result<Vec<u8>, Self> {
         if let Self::Eight(v) = self {
             Ok(v)
@@ -43,6 +49,7 @@ impl BitDepth {
         matches!(self, Self::Sixteen(..))
     }
 
+    /// Returns the inner value of the enum if it is [`Self::Sixteen`].
     #[must_use]
     pub fn as_sixteen(&self) -> Option<&Vec<i16>> {
         if let Self::Sixteen(v) = self {
@@ -52,6 +59,11 @@ impl BitDepth {
         }
     }
 
+    /// Attempts to convert into the inner value.
+    ///
+    /// ## Errors
+    ///
+    /// Fails if enum isn't the [`Self::Sixteen`] variant.
     pub fn try_into_sixteen(self) -> Result<Vec<i16>, Self> {
         if let Self::Sixteen(v) = self {
             Ok(v)
@@ -66,6 +78,7 @@ impl BitDepth {
         matches!(self, Self::TwentyFour(..))
     }
 
+    /// Returns the inner value of the enum if it is [`Self::TwentyFour`].
     #[must_use]
     pub fn as_twenty_four(&self) -> Option<&Vec<i32>> {
         if let Self::TwentyFour(v) = self {
@@ -75,6 +88,11 @@ impl BitDepth {
         }
     }
 
+    /// Attempts to convert into the inner value.
+    ///
+    /// ## Errors
+    ///
+    /// Fails if enum isn't the [`Self::TwentyFour`] variant.
     pub fn try_into_twenty_four(self) -> Result<Vec<i32>, Self> {
         if let Self::TwentyFour(v) = self {
             Ok(v)
@@ -89,6 +107,7 @@ impl BitDepth {
         matches!(self, Self::ThirtyTwoFloat(..))
     }
 
+    /// Returns the inner value of the enum if it is [`Self::ThirtyTwoFloat`].
     #[must_use]
     pub fn as_thirty_two_float(&self) -> Option<&Vec<f32>> {
         if let Self::ThirtyTwoFloat(v) = self {
@@ -98,6 +117,11 @@ impl BitDepth {
         }
     }
 
+    /// Attempts to convert into the inner value.
+    ///
+    /// ## Errors
+    ///
+    /// Fails if enum isn't the [`Self::ThirtyTwoFloat`] variant.
     pub fn try_into_thirty_two_float(self) -> Result<Vec<f32>, Self> {
         if let Self::ThirtyTwoFloat(v) = self {
             Ok(v)
