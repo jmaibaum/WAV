@@ -1,5 +1,9 @@
 # WAV
 
+## Version 1.0.0
+
+* [#11](https://github.com/Fluhzar/WAV/pull/11) - Added benchmarks.
+
 ## Version 0.6.0
 
 * Added benchmark tests under the `benches` folder [faddde7](https://github.com/Fluhzar/WAV/commit/faddde76cece1be530653d9e305fcad798627d54)
@@ -7,8 +11,8 @@
 
 ## Version 0.5.0
 
-* Modified the signature of `wav::write` to borrow the `BitDepth` parameter rather than own.
-* Updated `riff` dependency to `^1.0`.
+* [#4](https://github.com/Fluhzar/WAV/issues/4) -Modified the signature of `wav::write` to borrow the `BitDepth` parameter rather than own.
+* [#6](https://github.com/Fluhzar/WAV/issues/6) - Updated `riff` dependency to `^1.0`.
 * Refactored code to be a bit more clear.
 * Fixed incorrect endian-ness of the 24-bit reading and writing.
 * Changed various `Into` and `TryInto` impls to `From` and `TryFrom` respectively.
