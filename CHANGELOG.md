@@ -2,6 +2,7 @@
 
 ## Version 1.0.0
 
+* [#13](https://github.com/Fluhzar/WAV/issues/13) - Changed tests to not rely on disk I/O.
 * [#11](https://github.com/Fluhzar/WAV/pull/11) - Added benchmarks.
 
 ## Version 0.6.0
