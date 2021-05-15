@@ -1,8 +1,8 @@
-//! This is a crate for reading in and writing out wave files. It supports
-//! uncompressed PCM bit depths of 8, 16, 24 bits, and 32bit IEEE Float formats,
-//! both with any number of channels, Unfortunately other types of data format
-//! (e.g. compressed WAVE files) are not supported. There is also no support for
-//! any metadata chunks or any chunks other than the "fmt " and "data" chunks.
+//! This is a crate for reading in and writing out wave files. It supports uncompressed PCM bit
+//! depths of 8, 16, 24 bits, and 32bit IEEE Float formats, both with any number of channels.
+//! Unfortunately other types of data format (e.g. compressed WAVE files) are not supported. There
+//! is also no support for any metadata chunks or any chunks other than the `"fmt "` and `"data"`
+//! chunks.
 //!
 //! ## Example
 //!
@@ -38,12 +38,12 @@ pub use bit_depth::BitDepth;
 mod tuple_iterator;
 use tuple_iterator::{PairIter, QuadrupletIter, TripletIter};
 
-/// Reads in the given `reader` and attempts to extract the audio data and
-/// header from it.
+/// Reads in the given `reader` and attempts to extract the audio data and header from it.
 ///
 /// ## Errors
 ///
 /// This function fails under the following circumstances:
+///
 /// * Any error occurring from the `reader` parameter during reading.
 /// * The data isn't RIFF data.
 /// * The wave header specifies a compressed data format.
@@ -62,15 +62,15 @@ where
 ///
 /// ## Notes
 ///
-/// Although `track` is a borrowed value, its contents will be formatted into an
-/// owned `Vec<u8>` so that it can be written to the `writer` through
-/// [`riff::ChunkContents::write`].
+/// Although `track` is a borrowed value, its contents will be formatted into an owned `Vec<u8>` so
+/// that it can be written to the `writer` through [`riff::ChunkContents::write`].
 ///
 /// ## Errors
 ///
 /// This function fails under the following circumstances:
+///
 /// * Any error occurring from the `writer` parameter during writing.
-/// * The given `BitDepth` is `BitDepth::Empty`.
+/// * The given [`BitDepth`] is [`BitDepth::Empty`].
 pub fn write<W>(header: Header, track: &BitDepth, writer: &mut W) -> std::io::Result<()>
 where
     W: Write + io::Seek,

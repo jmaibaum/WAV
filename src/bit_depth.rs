@@ -2,7 +2,7 @@
 
 use std::convert::TryFrom;
 
-/// Enum listing the supported bit-depths and containers for the samples at each depth.
+/// The supported bit-depths and containers for the samples at each depth.
 #[derive(Debug, PartialEq, Clone)]
 #[allow(missing_docs)]
 pub enum BitDepth {
@@ -130,7 +130,7 @@ impl BitDepth {
         }
     }
 
-    /// Returns `true` if the bit depth is [`Empty`].
+    /// Returns `true` if the bit depth is [`Self::Empty`].
     #[must_use]
     pub fn is_empty(&self) -> bool {
         matches!(self, Self::Empty)
@@ -172,7 +172,7 @@ impl TryFrom<BitDepth> for Vec<u8> {
 
     /// ## Errors
     ///
-    /// This function fails if `value` is not `BitDepth::Eight`.
+    /// This function fails if `value` is not [`BitDepth::Eight`].
     fn try_from(value: BitDepth) -> Result<Self, Self::Error> {
         if let BitDepth::Eight(v) = value {
             Ok(v)
@@ -187,7 +187,7 @@ impl TryFrom<BitDepth> for Vec<i16> {
 
     /// ## Errors
     ///
-    /// This function fails if `value` is not `BitDepth::Sixteen`.
+    /// This function fails if `value` is not [`BitDepth::Sixteen`].
     fn try_from(value: BitDepth) -> Result<Self, Self::Error> {
         if let BitDepth::Sixteen(v) = value {
             Ok(v)
@@ -202,7 +202,7 @@ impl TryFrom<BitDepth> for Vec<i32> {
 
     /// ## Errors
     ///
-    /// This function fails if `value` is not `BitDepth::TwentyFour`.
+    /// This function fails if `value` is not [`BitDepth::TwentyFour`].
     fn try_from(value: BitDepth) -> Result<Self, Self::Error> {
         if let BitDepth::TwentyFour(v) = value {
             Ok(v)
@@ -217,7 +217,7 @@ impl TryFrom<BitDepth> for Vec<f32> {
 
     /// ## Errors
     ///
-    /// This function fails if `value` is not `BitDepth::ThirtyTwoFloat`.
+    /// This function fails if `value` is not [`BitDepth::ThirtyTwoFloat`].
     fn try_from(value: BitDepth) -> Result<Self, Self::Error> {
         if let BitDepth::ThirtyTwoFloat(v) = value {
             Ok(v)
