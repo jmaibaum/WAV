@@ -24,15 +24,13 @@ where
                 self.a = None;
                 Some(a)
             }
-            None => {
-                match self.b {
-                    Some(b) => {
-                        self.b = None;
-                        Some(b)
-                    }
-                    None => None,
+            None => match self.b {
+                Some(b) => {
+                    self.b = None;
+                    Some(b)
                 }
-            }
+                None => None,
+            },
         }
     }
 }
@@ -65,23 +63,19 @@ where
                 self.a = None;
                 Some(a)
             }
-            None => {
-                match self.b {
-                    Some(b) => {
-                        self.b = None;
-                        Some(b)
-                    }
-                    None => {
-                        match self.c {
-                            Some(c) => {
-                                self.c = None;
-                                Some(c)
-                            }
-                            None => None,
-                        }
-                    }
+            None => match self.b {
+                Some(b) => {
+                    self.b = None;
+                    Some(b)
                 }
-            }
+                None => match self.c {
+                    Some(c) => {
+                        self.c = None;
+                        Some(c)
+                    }
+                    None => None,
+                },
+            },
         }
     }
 }
@@ -116,31 +110,25 @@ where
                 self.a = None;
                 Some(a)
             }
-            None => {
-                match self.b {
-                    Some(b) => {
-                        self.b = None;
-                        Some(b)
-                    }
-                    None => {
-                        match self.c {
-                            Some(c) => {
-                                self.c = None;
-                                Some(c)
-                            }
-                            None => {
-                                match self.d {
-                                    Some(d) => {
-                                        self.d = None;
-                                        Some(d)
-                                    }
-                                    None => None,
-                                }
-                            }
-                        }
-                    }
+            None => match self.b {
+                Some(b) => {
+                    self.b = None;
+                    Some(b)
                 }
-            }
+                None => match self.c {
+                    Some(c) => {
+                        self.c = None;
+                        Some(c)
+                    }
+                    None => match self.d {
+                        Some(d) => {
+                            self.d = None;
+                            Some(d)
+                        }
+                        None => None,
+                    },
+                },
+            },
         }
     }
 }

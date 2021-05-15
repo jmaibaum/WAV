@@ -75,9 +75,15 @@ pub fn write<W>(header: Header, track: &BitDepth, writer: &mut W) -> std::io::Re
 where
     W: Write + io::Seek,
 {
-    const WAVE_ID: riff::ChunkId = riff::ChunkId { value: [b'W', b'A', b'V', b'E'] };
-    const HEADER_ID: riff::ChunkId = riff::ChunkId { value: [b'f', b'm', b't', b' '] };
-    const DATA_ID: riff::ChunkId = riff::ChunkId { value: [b'd', b'a', b't', b'a'] };
+    const WAVE_ID: riff::ChunkId = riff::ChunkId {
+        value: [b'W', b'A', b'V', b'E'],
+    };
+    const HEADER_ID: riff::ChunkId = riff::ChunkId {
+        value: [b'f', b'm', b't', b' '],
+    };
+    const DATA_ID: riff::ChunkId = riff::ChunkId {
+        value: [b'd', b'a', b't', b'a'],
+    };
 
     let h_vec: [u8; 16] = header.into();
     let h_dat = riff::ChunkContents::Data(HEADER_ID, Vec::from(h_vec));

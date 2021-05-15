@@ -68,9 +68,8 @@ impl Header {
 impl From<Header> for [u8; 16] {
     #[allow(clippy::shadow_unrelated)]
     fn from(h: Header) -> Self {
-        
         let mut v: [u8; 16] = [0; 16];
-        
+
         let b = h.audio_format.to_le_bytes();
         v[0] = b[0];
         v[1] = b[1];

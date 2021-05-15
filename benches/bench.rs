@@ -1,8 +1,8 @@
 #![feature(test)]
-use std::{cell::Cell, fs::File};
 use std::io::Cursor;
 use std::io::Read;
-use wav::{read, write, header::Header, bit_depth::BitDepth};
+use std::{cell::Cell, fs::File};
+use wav::{bit_depth::BitDepth, header::Header, read, write};
 
 extern crate test;
 use test::{black_box, Bencher};
@@ -40,7 +40,7 @@ macro_rules! create_benches {
     )*};
 }
 
-create_benches!{
+create_benches! {
     {read_sine, write_sine, "data/sine.wav"},
     {read_sine_8bit_48khz, write_sine_8bit_48khz, "data/sine_8bit_48khz.wav"},
     {read_sine_16bit_48khz, write_sine_16bit_48khz, "data/sine_16bit_48khz.wav"},
