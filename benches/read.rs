@@ -25,10 +25,10 @@ macro_rules! create_read_bench {
 }
 
 create_read_bench!(read_sine, "data/sine.wav");
-create_read_bench!(read_sine_8bit_48khz, "data/sine_8bit48kHz.wav");
-create_read_bench!(read_sine_16bit_48khz, "data/sine_16bit48kHz.wav");
-create_read_bench!(read_sine_24bit_48khz, "data/sine_24bit48kHz.wav");
-create_read_bench!(read_sine_32bit_float_48khz, "data/sine_32bitfloat48kHz.wav");
+create_read_bench!(read_sine_8bit_48khz, "data/sine_8bit_48khz.wav");
+create_read_bench!(read_sine_16bit_48khz, "data/sine_16bit_48khz.wav");
+create_read_bench!(read_sine_24bit_48khz, "data/sine_24bit_48khz.wav");
+create_read_bench!(read_sine_32bit_float_48khz, "data/sine_32bit_float_48khz.wav");
 
 /*#[bench]
 fn read_sine(b: &mut Bencher){
