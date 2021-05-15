@@ -13,6 +13,106 @@ pub enum BitDepth {
     Empty,
 }
 
+impl BitDepth {
+    /// Returns `true` if the bit depth is [`Self::Eight`].
+    #[must_use]
+    pub fn is_eight(&self) -> bool {
+        matches!(self, Self::Eight(..))
+    }
+
+    #[must_use]
+    pub fn as_eight(&self) -> Option<&Vec<u8>> {
+        if let Self::Eight(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    pub fn try_into_eight(self) -> Result<Vec<u8>, Self> {
+        if let Self::Eight(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
+        }
+    }
+
+    /// Returns `true` if the bit depth is [`Self::Sixteen`].
+    #[must_use]
+    pub fn is_sixteen(&self) -> bool {
+        matches!(self, Self::Sixteen(..))
+    }
+
+    #[must_use]
+    pub fn as_sixteen(&self) -> Option<&Vec<i16>> {
+        if let Self::Sixteen(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    pub fn try_into_sixteen(self) -> Result<Vec<i16>, Self> {
+        if let Self::Sixteen(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
+        }
+    }
+
+    /// Returns `true` if the bit depth is [`Self::TwentyFour`].
+    #[must_use]
+    pub fn is_twenty_four(&self) -> bool {
+        matches!(self, Self::TwentyFour(..))
+    }
+
+    #[must_use]
+    pub fn as_twenty_four(&self) -> Option<&Vec<i32>> {
+        if let Self::TwentyFour(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    pub fn try_into_twenty_four(self) -> Result<Vec<i32>, Self> {
+        if let Self::TwentyFour(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
+        }
+    }
+
+    /// Returns `true` if the bit depth is [`Self::ThirtyTwoFloat`].
+    #[must_use]
+    pub fn is_thirty_two_float(&self) -> bool {
+        matches!(self, Self::ThirtyTwoFloat(..))
+    }
+
+    #[must_use]
+    pub fn as_thirty_two_float(&self) -> Option<&Vec<f32>> {
+        if let Self::ThirtyTwoFloat(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    pub fn try_into_thirty_two_float(self) -> Result<Vec<f32>, Self> {
+        if let Self::ThirtyTwoFloat(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
+        }
+    }
+
+    /// Returns `true` if the bit depth is [`Empty`].
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        matches!(self, Self::Empty)
+    }
+}
+
 impl Default for BitDepth {
     fn default() -> Self {
         BitDepth::Empty
