@@ -75,13 +75,13 @@ pub fn write<W>(header: Header, track: &BitDepth, writer: &mut W) -> std::io::Re
 where
     W: Write + io::Seek,
 {
-    let w_id = riff::ChunkId { value: [b'W', b'A', b'V', b'E'] };
+    const WAVE_ID: riff::ChunkId = riff::ChunkId { value: [b'W', b'A', b'V', b'E'] };
+    const HEADER_ID: riff::ChunkId = riff::ChunkId { value: [b'f', b'm', b't', b' '] };
+    const DATA_ID: riff::ChunkId = riff::ChunkId { value: [b'd', b'a', b't', b'a'] };
 
-    let h_id = riff::ChunkId { value: [b'f', b'm', b't', b' '] };
     let h_vec: [u8; 16] = header.into();
-    let h_dat = riff::ChunkContents::Data(h_id, Vec::from(&h_vec[0..16]));
+    let h_dat = riff::ChunkContents::Data(HEADER_ID, Vec::from(h_vec));
 
-    let d_id = riff::ChunkId { value: [b'd', b'a', b't', b'a'] };
     let d_vec = match track {
         BitDepth::Eight(v) => v.clone(),
         BitDepth::Sixteen(v) => v
@@ -112,9 +112,9 @@ where
             ))
         }
     };
-    let d_dat = riff::ChunkContents::Data(d_id, d_vec);
+    let d_dat = riff::ChunkContents::Data(DATA_ID, d_vec);
 
-    let r = riff::ChunkContents::Children(riff::RIFF_ID.clone(), w_id, vec![h_dat, d_dat]);
+    let r = riff::ChunkContents::Children(riff::RIFF_ID.clone(), WAVE_ID, vec![h_dat, d_dat]);
 
     r.write(writer)?;
 
