@@ -24,7 +24,6 @@
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
 
-use riff;
 use std::{
     convert::TryFrom,
     io::{self, Read, Write},
@@ -50,6 +49,7 @@ use tuple_iterator::{PairIter, QuadrupletIter, TripletIter};
 /// * The wave header specifies a compressed data format.
 /// * The wave header specifies an unsupported bit-depth.
 /// * The wave data is malformed, or otherwise couldn't be parsed into samples.
+#[allow(clippy::similar_names)]
 pub fn read<R>(reader: &mut R) -> io::Result<(Header, BitDepth)>
 where
     R: Read + io::Seek,
@@ -70,18 +70,18 @@ where
 ///
 /// This function fails under the following circumstances:
 /// * Any error occurring from the `writer` parameter during writing.
-/// * The given BitDepth is `BitDepth::Empty`.
+/// * The given `BitDepth` is `BitDepth::Empty`.
 pub fn write<W>(header: Header, track: &BitDepth, writer: &mut W) -> std::io::Result<()>
 where
     W: Write + io::Seek,
 {
-    let w_id = riff::ChunkId::new("WAVE").unwrap();
+    let w_id = riff::ChunkId { value: [b'W', b'A', b'V', b'E'] };
 
-    let h_id = riff::ChunkId::new("fmt ").unwrap();
+    let h_id = riff::ChunkId { value: [b'f', b'm', b't', b' '] };
     let h_vec: [u8; 16] = header.into();
     let h_dat = riff::ChunkContents::Data(h_id, Vec::from(&h_vec[0..16]));
 
-    let d_id = riff::ChunkId::new("data").unwrap();
+    let d_id = riff::ChunkId { value: [b'd', b'a', b't', b'a'] };
     let d_vec = match track {
         BitDepth::Eight(v) => v.clone(),
         BitDepth::Sixteen(v) => v
@@ -121,6 +121,7 @@ where
     Ok(())
 }
 
+#[allow(clippy::similar_names)]
 fn read_header<R>(reader: &mut R) -> io::Result<Header>
 where
     R: Read + io::Seek,
@@ -153,6 +154,7 @@ where
     ))
 }
 
+#[allow(clippy::similar_names)]
 fn read_data<R>(reader: &mut R, header: &Header) -> io::Result<BitDepth>
 where
     R: Read + io::Seek,
@@ -229,12 +231,12 @@ where
 
     let form_type = wav.read_type(reader)?;
 
-    if form_type.as_str() != "WAVE" {
+    if form_type.as_str() == "WAVE" {
+        Ok(wav)
+    } else {
         Err(io::Error::new(
             io::ErrorKind::Other,
             "RIFF file type not \"WAVE\"",
         ))
-    } else {
-        Ok(wav)
     }
 }

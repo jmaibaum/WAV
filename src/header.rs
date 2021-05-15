@@ -47,6 +47,7 @@ impl Header {
     /// ```
     /// let h = wav::Header::new(wav::header::WAV_FORMAT_PCM, 2, 48_000, 16);
     /// ```
+    #[must_use]
     pub fn new(
         audio_format: u16,
         channel_count: u16,
@@ -58,16 +59,18 @@ impl Header {
             channel_count,
             sampling_rate,
             bits_per_sample,
-            bytes_per_second: (((bits_per_sample >> 3) * channel_count) as u32) * sampling_rate,
-            bytes_per_sample: ((bits_per_sample >> 3) * channel_count) as u16,
+            bytes_per_second: u32::from((bits_per_sample >> 3) * channel_count) * sampling_rate,
+            bytes_per_sample: (bits_per_sample >> 3) * channel_count,
         }
     }
 }
 
 impl From<Header> for [u8; 16] {
+    #[allow(clippy::shadow_unrelated)]
     fn from(h: Header) -> Self {
+        
         let mut v: [u8; 16] = [0; 16];
-
+        
         let b = h.audio_format.to_le_bytes();
         v[0] = b[0];
         v[1] = b[1];

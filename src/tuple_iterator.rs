@@ -19,14 +19,20 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(a) = self.a {
-            self.a = None;
-            Some(a)
-        } else if let Some(b) = self.b {
-            self.b = None;
-            Some(b)
-        } else {
-            None
+        match self.a {
+            Some(a) => {
+                self.a = None;
+                Some(a)
+            }
+            None => {
+                match self.b {
+                    Some(b) => {
+                        self.b = None;
+                        Some(b)
+                    }
+                    None => None,
+                }
+            }
         }
     }
 }
@@ -54,17 +60,28 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(a) = self.a {
-            self.a = None;
-            Some(a)
-        } else if let Some(b) = self.b {
-            self.b = None;
-            Some(b)
-        } else if let Some(c) = self.c {
-            self.c = None;
-            Some(c)
-        } else {
-            None
+        match self.a {
+            Some(a) => {
+                self.a = None;
+                Some(a)
+            }
+            None => {
+                match self.b {
+                    Some(b) => {
+                        self.b = None;
+                        Some(b)
+                    }
+                    None => {
+                        match self.c {
+                            Some(c) => {
+                                self.c = None;
+                                Some(c)
+                            }
+                            None => None,
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -94,20 +111,36 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(a) = self.a {
-            self.a = None;
-            Some(a)
-        } else if let Some(b) = self.b {
-            self.b = None;
-            Some(b)
-        } else if let Some(c) = self.c {
-            self.c = None;
-            Some(c)
-        } else if let Some(d) = self.d {
-            self.d = None;
-            Some(d)
-        } else {
-            None
+        match self.a {
+            Some(a) => {
+                self.a = None;
+                Some(a)
+            }
+            None => {
+                match self.b {
+                    Some(b) => {
+                        self.b = None;
+                        Some(b)
+                    }
+                    None => {
+                        match self.c {
+                            Some(c) => {
+                                self.c = None;
+                                Some(c)
+                            }
+                            None => {
+                                match self.d {
+                                    Some(d) => {
+                                        self.d = None;
+                                        Some(d)
+                                    }
+                                    None => None,
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
