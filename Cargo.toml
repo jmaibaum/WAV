@@ -1,7 +1,6 @@
 [package]
 name = "wav"
-description = "This is a crate for reading in and writing out wave files. It supports bit depths of 8, 16, and 24 bits, and any number of channels."
-readme = "README.md"
+description = "This is a crate for reading in and writing out wave files. It supports bit depths of 8, 16, 24 bits, and 32-bit IEEE Float, and any number of channels."
 documentation = "https://docs.rs/wav"
 repository = "https://github.com/Fluhzar/WAV"
 license = "LGPL-3.0"
