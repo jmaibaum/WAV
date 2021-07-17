@@ -65,6 +65,8 @@ where
 /// Although `track` is a borrowed value, its contents will be formatted into an owned `Vec<u8>` so
 /// that it can be written to the `writer` through [`riff::ChunkContents::write`].
 ///
+/// This is a backwards-compatible convenience wrapper for `::write_custom` without custom chunks.
+///
 /// ## Errors
 ///
 /// This function fails under the following circumstances:
@@ -72,6 +74,32 @@ where
 /// * Any error occurring from the `writer` parameter during writing.
 /// * The given [`BitDepth`] is [`BitDepth::Empty`].
 pub fn write<W>(header: Header, track: &BitDepth, writer: &mut W) -> std::io::Result<()>
+where
+    W: Write + io::Seek,
+{
+    write_custom(header, track, None, writer)
+}
+
+/// Can be used to include custom [`riff::ChunkContents`] between the `fmt ` and the `data` chunks
+/// when writing the given wav data to the given `writer`.
+///
+/// ## Notes
+///
+/// Although `track` is a borrowed value, its contents will be formatted into an owned `Vec<u8>` so
+/// that it can be written to the `writer` through [`riff::ChunkContents::write`].
+///
+/// ## Errors
+///
+/// This function fails under the following circumstances:
+///
+/// * Any error occurring from the `writer` parameter during writing.
+/// * The given [`BitDepth`] is [`BitDepth::Empty`].
+pub fn write_custom<W>(
+    header: Header,
+    track: &BitDepth,
+    custom_chunk_contents: Option<riff::ChunkContents>,
+    writer: &mut W,
+) -> std::io::Result<()>
 where
     W: Write + io::Seek,
 {
@@ -120,7 +148,15 @@ where
     };
     let d_dat = riff::ChunkContents::Data(DATA_ID, d_vec);
 
-    let r = riff::ChunkContents::Children(riff::RIFF_ID.clone(), WAVE_ID, vec![h_dat, d_dat]);
+    let r = riff::ChunkContents::Children(
+        riff::RIFF_ID.clone(),
+        WAVE_ID,
+        if let Some(custom_chunk_contents) = custom_chunk_contents {
+            vec![h_dat, custom_chunk_contents, d_dat]
+        } else {
+            vec![h_dat, d_dat]
+        },
+    );
 
     r.write(writer)?;
 
