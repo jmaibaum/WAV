@@ -58,6 +58,32 @@ where
     Ok((header, read_data(reader, &header)?))
 }
 
+/// Returns the [`riff::ChunkContents`] of a custom `chunk_id` (see [`riff::ChunkId`]) if found in
+/// the provided `reader`.
+///
+/// ## Errors
+///
+/// This function fails under the following circumstances:
+///
+/// * Any error occurring from the `reader` parameter during reading
+/// * The data isn't RIFF data
+/// * The searched for `chunk_id` doesn't exist in the data
+pub fn read_custom_chunk<R>(reader: &mut R, chunk_id: riff::ChunkId) -> io::Result<riff::ChunkContents>
+where
+    R: Read + io::Seek,
+{
+    let wav = verify_wav_file(reader)?;
+
+    for c in wav.iter(reader) {
+        if c.id() == chunk_id {
+            let data_bytes = c.read_contents(reader)?;
+            return Ok(riff::ChunkContents::Data(chunk_id, data_bytes))
+        }
+    }
+
+    Err(io::Error::new(io::ErrorKind::Other,format!("Chunk {} not found", chunk_id)))
+}
+
 /// Writes the given wav data to the given `writer`.
 ///
 /// ## Notes
